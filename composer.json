@@ -1,7 +1,6 @@
 {
     "require": {
-        "mongodb/mongodb": "^2.1",
-        "ext-mongodb": "*",
-        "phpmailer/phpmailer": "^7.0"
+        "php": ">=7.4",
+        "mongodb/mongodb": "^1.16"
     }
 }
