@@ -21,6 +21,6 @@ RUN chown -R www-data:www-data /var/www/html/
 
 # Composer install (kita letak --ignore-platform-reqs untuk elak error version)
 # Ganti baris RUN composer install... dengan ni:
-RUN composer update --no-dev --ignore-platform-reqs && composer install --no-dev --ignore-platform-reqs
-
+# Buang lock file lama dan install semula
+RUN rm -f composer.lock && composer install --no-dev --optimize-autoloader
 EXPOSE 80
