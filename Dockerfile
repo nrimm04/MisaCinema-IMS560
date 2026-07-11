@@ -20,6 +20,7 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html/
 
 # Composer install (kita letak --ignore-platform-reqs untuk elak error version)
-RUN composer install --no-dev --ignore-platform-reqs
+# Ganti baris RUN composer install... dengan ni:
+RUN composer update --no-dev --ignore-platform-reqs && composer install --no-dev --ignore-platform-reqs
 
 EXPOSE 80
