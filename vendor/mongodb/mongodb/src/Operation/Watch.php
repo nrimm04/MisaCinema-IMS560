@@ -17,6 +17,7 @@
 
 namespace MongoDB\Operation;
 
+use Iterator;
 use MongoDB\BSON\TimestampInterface;
 use MongoDB\ChangeStream;
 use MongoDB\Codec\DocumentCodec;
@@ -55,9 +56,12 @@ use function MongoDB\select_server;
  *
  * @see \MongoDB\Collection::watch()
  * @see https://mongodb.com/docs/manual/changeStreams/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class Watch implements /* @internal */ CommandSubscriber
+class Watch implements Executable, /* @internal */ CommandSubscriber
 {
+    public const FULL_DOCUMENT_DEFAULT = 'default';
     public const FULL_DOCUMENT_UPDATE_LOOKUP = 'updateLookup';
     public const FULL_DOCUMENT_WHEN_AVAILABLE = 'whenAvailable';
     public const FULL_DOCUMENT_REQUIRED = 'required';
@@ -263,10 +267,12 @@ final class Watch implements /* @internal */ CommandSubscriber
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return ChangeStream
      * @throws UnsupportedException if collation or read concern is used and unsupported
      * @throws RuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): ChangeStream
+    public function execute(Server $server)
     {
         return new ChangeStream(
             $this->createChangeStreamIterator($server),
@@ -349,8 +355,10 @@ final class Watch implements /* @internal */ CommandSubscriber
      *
      * The command will be executed using APM so that we can capture data from
      * its response (e.g. firstBatch size, postBatchResumeToken).
+     *
+     * @return CursorInterface&Iterator
      */
-    private function executeAggregate(Server $server): CursorInterface
+    private function executeAggregate(Server $server)
     {
         addSubscriber($this);
 
@@ -365,8 +373,9 @@ final class Watch implements /* @internal */ CommandSubscriber
      * Return the initial resume token for creating the ChangeStreamIterator.
      *
      * @see https://github.com/mongodb/specifications/blob/master/source/change-streams/change-streams.rst#updating-the-cached-resume-token
+     * @return array|object|null
      */
-    private function getInitialResumeToken(): array|object|null
+    private function getInitialResumeToken()
     {
         if ($this->firstBatchSize === 0 && isset($this->postBatchResumeToken)) {
             return $this->postBatchResumeToken;

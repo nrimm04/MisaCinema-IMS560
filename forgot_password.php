@@ -4,7 +4,7 @@ require 'vendor/autoload.php';
 
 // 1. CONNECT TO DATABASE
 // Ensure your connection string is correct
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
 $usersCollection = $client->misacinema_db->users;
 
 $step = 1; // Default to Step 1

@@ -51,7 +51,7 @@ use function MongoDB\server_supports_feature;
  * @internal
  * @see https://mongodb.com/docs/manual/reference/command/findAndModify/
  */
-final class FindAndModify implements Explainable
+class FindAndModify implements Executable, Explainable
 {
     private const WIRE_VERSION_FOR_HINT = 9;
 
@@ -221,11 +221,13 @@ final class FindAndModify implements Explainable
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return array|object|null
      * @throws UnexpectedValueException if the command response was malformed
      * @throws UnsupportedException if hint or write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): array|object|null
+    public function execute(Server $server)
     {
         /* Server versions >= 4.2.0 raise errors for unsupported update options.
          * For previous versions, the CRUD spec requires a client-side error. */
@@ -272,8 +274,9 @@ final class FindAndModify implements Explainable
      * Returns the command document for this operation.
      *
      * @see Explainable::getCommandDocument()
+     * @return array
      */
-    public function getCommandDocument(): array
+    public function getCommandDocument()
     {
         return $this->createCommandDocument();
     }

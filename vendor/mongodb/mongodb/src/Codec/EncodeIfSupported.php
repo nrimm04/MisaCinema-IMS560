@@ -30,13 +30,17 @@ trait EncodeIfSupported
 
     /**
      * @psalm-param NativeType $value
+     * @return mixed
      * @psalm-return BSONType
      * @throws UnsupportedValueException if the encoder does not support the value
      */
-    abstract public function encode(mixed $value): mixed;
+    abstract public function encode(mixed $value);
 
-    /** @psalm-return ($value is NativeType ? BSONType : $value) */
-    public function encodeIfSupported(mixed $value): mixed
+    /**
+     * @return mixed
+     * @psalm-return ($value is NativeType ? BSONType : $value)
+     */
+    public function encodeIfSupported(mixed $value)
     {
         return $this->canEncode($value) ? $this->encode($value) : $value;
     }

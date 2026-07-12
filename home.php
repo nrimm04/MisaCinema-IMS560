@@ -3,7 +3,7 @@ session_start();
 require 'vendor/autoload.php';
 
 // 1. Connection DB
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
 $db = $client->misacinema_db;
 $collection = $db->shows; 
 $senaraiMovie = $collection->find([]);

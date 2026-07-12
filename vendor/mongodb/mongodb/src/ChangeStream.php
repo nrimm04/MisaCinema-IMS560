@@ -21,16 +21,22 @@ use Iterator;
 use MongoDB\BSON\Document;
 use MongoDB\BSON\Int64;
 use MongoDB\Codec\DocumentCodec;
+use MongoDB\Driver\CursorId;
 use MongoDB\Driver\Exception\ConnectionException;
 use MongoDB\Driver\Exception\RuntimeException;
 use MongoDB\Driver\Exception\ServerException;
 use MongoDB\Exception\BadMethodCallException;
 use MongoDB\Exception\ResumeTokenException;
 use MongoDB\Model\ChangeStreamIterator;
+use ReturnTypeWillChange;
 
 use function assert;
 use function call_user_func;
 use function in_array;
+use function sprintf;
+use function trigger_error;
+
+use const E_USER_DEPRECATED;
 
 /**
  * Iterator for a change stream.
@@ -43,7 +49,11 @@ use function in_array;
  */
 class ChangeStream implements Iterator
 {
-    private const CURSOR_NOT_FOUND = 43;
+    /**
+     * @deprecated 1.4
+     * @todo make this constant private in 2.0 (see: PHPLIB-360)
+     */
+    public const CURSOR_NOT_FOUND = 43;
 
     private const RESUMABLE_ERROR_CODES = [
         6, // HostUnreachable
@@ -78,8 +88,12 @@ class ChangeStream implements Iterator
      */
     private bool $hasAdvanced = false;
 
-    /** @see https://php.net/iterator.current */
-    public function current(): array|object|null
+    /**
+     * @see https://php.net/iterator.current
+     * @return array|object|null
+     */
+    #[ReturnTypeWillChange]
+    public function current()
     {
         $value = $this->iterator->current();
 
@@ -92,9 +106,26 @@ class ChangeStream implements Iterator
         return $this->codec->decode($value);
     }
 
-    public function getCursorId(): Int64
+    /**
+     * @return CursorId|Int64
+     * @psalm-return ($asInt64 is true ? Int64 : CursorId)
+     */
+    #[ReturnTypeWillChange]
+    public function getCursorId(bool $asInt64 = false)
     {
-        return $this->iterator->getInnerIterator()->getId();
+        if (! $asInt64) {
+            @trigger_error(
+                sprintf(
+                    'The method "%s" will no longer return a "%s" instance in the future. Pass "true" as argument to change to the new behavior and receive a "%s" instance instead.',
+                    __METHOD__,
+                    CursorId::class,
+                    Int64::class,
+                ),
+                E_USER_DEPRECATED,
+            );
+        }
+
+        return $this->iterator->getInnerIterator()->getId($asInt64);
     }
 
     /**
@@ -103,14 +134,20 @@ class ChangeStream implements Iterator
      * Null may be returned if no change documents have been iterated and the
      * server did not include a postBatchResumeToken in its aggregate or getMore
      * command response.
+     *
+     * @return array|object|null
      */
-    public function getResumeToken(): array|object|null
+    public function getResumeToken()
     {
         return $this->iterator->getResumeToken();
     }
 
-    /** @see https://php.net/iterator.key */
-    public function key(): ?int
+    /**
+     * @see https://php.net/iterator.key
+     * @return int|null
+     */
+    #[ReturnTypeWillChange]
+    public function key()
     {
         if ($this->valid()) {
             return $this->key;
@@ -121,9 +158,11 @@ class ChangeStream implements Iterator
 
     /**
      * @see https://php.net/iterator.next
+     * @return void
      * @throws ResumeTokenException
      */
-    public function next(): void
+    #[ReturnTypeWillChange]
+    public function next()
     {
         try {
             $this->iterator->next();
@@ -135,9 +174,11 @@ class ChangeStream implements Iterator
 
     /**
      * @see https://php.net/iterator.rewind
+     * @return void
      * @throws ResumeTokenException
      */
-    public function rewind(): void
+    #[ReturnTypeWillChange]
+    public function rewind()
     {
         try {
             $this->iterator->rewind();
@@ -150,8 +191,12 @@ class ChangeStream implements Iterator
         }
     }
 
-    /** @see https://php.net/iterator.valid */
-    public function valid(): bool
+    /**
+     * @see https://php.net/iterator.valid
+     * @return boolean
+     */
+    #[ReturnTypeWillChange]
+    public function valid()
     {
         return $this->iterator->valid();
     }
@@ -210,8 +255,7 @@ class ChangeStream implements Iterator
          * have been received in the last response. Therefore, we can unset the
          * resumeCallable. This will free any reference to Watch as well as the
          * only reference to any implicit session created therein. */
-        // Use a type-unsafe comparison to compare with Int64 instances
-        if ($this->getCursorId() == 0) {
+        if ((string) $this->getCursorId(true) === '0') {
             $this->resumeCallable = null;
         }
 

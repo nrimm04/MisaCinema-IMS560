@@ -20,6 +20,7 @@ namespace MongoDB\Model;
 use Countable;
 use Iterator;
 use IteratorIterator;
+use ReturnTypeWillChange;
 use Traversable;
 
 use function count;
@@ -39,7 +40,7 @@ use function reset;
  * @template TValue
  * @template-implements Iterator<TKey, TValue>
  */
-final class CachingIterator implements Countable, Iterator
+class CachingIterator implements Countable, Iterator
 {
     private const FIELD_KEY = 0;
     private const FIELD_VALUE = 1;
@@ -78,8 +79,12 @@ final class CachingIterator implements Countable, Iterator
         return count($this->items);
     }
 
-    /** @see https://php.net/iterator.current */
-    public function current(): mixed
+    /**
+     * @see https://php.net/iterator.current
+     * @return mixed
+     */
+    #[ReturnTypeWillChange]
+    public function current()
     {
         $currentItem = current($this->items);
 
@@ -88,9 +93,11 @@ final class CachingIterator implements Countable, Iterator
 
     /**
      * @see https://php.net/iterator.key
+     * @return mixed
      * @psalm-return TKey|null
      */
-    public function key(): mixed
+    #[ReturnTypeWillChange]
+    public function key()
     {
         $currentItem = current($this->items);
 

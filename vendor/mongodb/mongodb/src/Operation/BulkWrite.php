@@ -45,8 +45,10 @@ use function sprintf;
  * Operation for executing multiple write operations.
  *
  * @see \MongoDB\Collection::bulkWrite()
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class BulkWrite
+class BulkWrite implements Executable
 {
     public const DELETE_MANY = 'deleteMany';
     public const DELETE_ONE  = 'deleteOne';
@@ -193,10 +195,12 @@ final class BulkWrite
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return BulkWriteResult
      * @throws UnsupportedException if write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): BulkWriteResult
+    public function execute(Server $server)
     {
         $inTransaction = isset($this->options['session']) && $this->options['session']->isInTransaction();
         if ($inTransaction && isset($this->options['writeConcern'])) {

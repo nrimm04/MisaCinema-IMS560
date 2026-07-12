@@ -30,8 +30,10 @@ use function MongoDB\is_document;
  *
  * @see \MongoDB\Collection::updateSearchIndexes()
  * @see https://mongodb.com/docs/manual/reference/command/updateSearchIndexes/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class UpdateSearchIndex
+class UpdateSearchIndex implements Executable
 {
     private object $definition;
 
@@ -61,6 +63,7 @@ final class UpdateSearchIndex
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
      * @throws UnsupportedException if write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */

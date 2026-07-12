@@ -7,15 +7,10 @@ namespace Composer\Autoload;
 class ComposerStaticInitf6db3cbd84449be397accc9a6f39b1aa
 {
     public static $files = array (
-        '606a39d89246991a373564698c2d8383' => __DIR__ . '/..' . '/symfony/polyfill-php85/bootstrap.php',
         '3a37ebac017bc098e9a86b35401e7a68' => __DIR__ . '/..' . '/mongodb/mongodb/src/functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'S' => 
-        array (
-            'Symfony\\Polyfill\\Php85\\' => 23,
-        ),
         'P' => 
         array (
             'Psr\\Log\\' => 8,
@@ -28,10 +23,6 @@ class ComposerStaticInitf6db3cbd84449be397accc9a6f39b1aa
     );
 
     public static $prefixDirsPsr4 = array (
-        'Symfony\\Polyfill\\Php85\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-php85',
-        ),
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
@@ -48,7 +39,6 @@ class ComposerStaticInitf6db3cbd84449be397accc9a6f39b1aa
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'NoDiscard' => __DIR__ . '/..' . '/symfony/polyfill-php85/Resources/stubs/NoDiscard.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

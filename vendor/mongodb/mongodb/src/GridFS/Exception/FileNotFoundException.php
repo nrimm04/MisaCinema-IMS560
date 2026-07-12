@@ -28,9 +28,9 @@ class FileNotFoundException extends RuntimeException
      * Thrown when a file cannot be found by its filename.
      *
      * @param string $filename Filename
-     * @internal
+     * @return self
      */
-    public static function byFilename(string $filename): self
+    public static function byFilename(string $filename)
     {
         return new self(sprintf('File with name "%s" not found', $filename));
     }
@@ -41,9 +41,9 @@ class FileNotFoundException extends RuntimeException
      * @param string  $filename  Filename
      * @param integer $revision  Revision
      * @param string  $namespace Namespace for the files collection
-     * @internal
+     * @return self
      */
-    public static function byFilenameAndRevision(string $filename, int $revision, string $namespace): self
+    public static function byFilenameAndRevision(string $filename, int $revision, string $namespace)
     {
         return new self(sprintf('File with name "%s" and revision "%d" not found in "%s"', $filename, $revision, $namespace));
     }
@@ -53,9 +53,9 @@ class FileNotFoundException extends RuntimeException
      *
      * @param mixed  $id        File ID
      * @param string $namespace Namespace for the files collection
-     * @internal
+     * @return self
      */
-    public static function byId(mixed $id, string $namespace): self
+    public static function byId(mixed $id, string $namespace)
     {
         $json = Document::fromPHP(['_id' => $id])->toRelaxedExtendedJSON();
 

@@ -1,11 +1,14 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 require 'vendor/autoload.php';
 
 // Setup MongoDB
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
-$usersCollection = $client->misacinema_db->users;
-
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
+$db = $client->misacinema_db;          // Tambahkan baris ni
+$usersCollection = $db->users;        // Tambahkan baris ni
 $localError = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {

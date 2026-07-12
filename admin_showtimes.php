@@ -6,7 +6,7 @@ require 'vendor/autoload.php';
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
 
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
 $db = $client->misacinema_db;
 
 $movies = $db->movies->find(); // Ambil list movie

@@ -35,8 +35,10 @@ use function MongoDB\is_document;
  *
  * @see \MongoDB\Collection::insertOne()
  * @see https://mongodb.com/docs/manual/reference/command/insert/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class InsertOne
+class InsertOne implements Executable
 {
     private array|object $document;
 
@@ -97,10 +99,12 @@ final class InsertOne
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return InsertOneResult
      * @throws UnsupportedException if write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): InsertOneResult
+    public function execute(Server $server)
     {
         $inTransaction = isset($this->options['session']) && $this->options['session']->isInTransaction();
         if (isset($this->options['writeConcern']) && $inTransaction) {
@@ -154,7 +158,8 @@ final class InsertOne
         return $options;
     }
 
-    private function validateDocument(array|object $document, ?DocumentCodec $codec): array|object
+    /** @return array|object */
+    private function validateDocument(array|object $document, ?DocumentCodec $codec)
     {
         if ($codec) {
             $document = $codec->encode($document);

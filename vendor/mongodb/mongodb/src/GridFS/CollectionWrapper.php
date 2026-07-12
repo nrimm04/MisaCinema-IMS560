@@ -18,6 +18,7 @@
 namespace MongoDB\GridFS;
 
 use ArrayIterator;
+use Iterator;
 use MongoDB\Collection;
 use MongoDB\Driver\CursorInterface;
 use MongoDB\Driver\Manager;
@@ -38,7 +39,7 @@ use function sprintf;
  *
  * @internal
  */
-final class CollectionWrapper
+class CollectionWrapper
 {
     private Collection $chunksCollection;
 
@@ -116,8 +117,9 @@ final class CollectionWrapper
      *
      * @param mixed   $id        File ID
      * @param integer $fromChunk Starting chunk (inclusive)
+     * @return CursorInterface&Iterator
      */
-    public function findChunksByFileId(mixed $id, int $fromChunk = 0): CursorInterface
+    public function findChunksByFileId(mixed $id, int $fromChunk = 0)
     {
         return $this->chunksCollection->find(
             [
@@ -189,8 +191,9 @@ final class CollectionWrapper
      * @see Find::__construct() for supported options
      * @param array|object $filter  Query by which to filter documents
      * @param array        $options Additional options
+     * @return CursorInterface&Iterator
      */
-    public function findFiles(array|object $filter, array $options = []): CursorInterface
+    public function findFiles(array|object $filter, array $options = [])
     {
         return $this->filesCollection->find($filter, $options);
     }
@@ -200,8 +203,9 @@ final class CollectionWrapper
      *
      * @param array|object $filter  Query by which to filter documents
      * @param array        $options Additional options
+     * @return array|object|null
      */
-    public function findOneFile(array|object $filter, array $options = []): array|object|null
+    public function findOneFile(array|object $filter, array $options = [])
     {
         return $this->filesCollection->findOne($filter, $options);
     }

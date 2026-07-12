@@ -31,8 +31,10 @@ use function MongoDB\is_pipeline;
  *
  * @see \MongoDB\Collection::updateOne()
  * @see https://mongodb.com/docs/manual/reference/command/update/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class UpdateOne implements Explainable
+class UpdateOne implements Executable, Explainable
 {
     private Update $update;
 
@@ -103,10 +105,12 @@ final class UpdateOne implements Explainable
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return UpdateResult
      * @throws UnsupportedException if collation is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): UpdateResult
+    public function execute(Server $server)
     {
         return $this->update->execute($server);
     }
@@ -115,8 +119,9 @@ final class UpdateOne implements Explainable
      * Returns the command document for this operation.
      *
      * @see Explainable::getCommandDocument()
+     * @return array
      */
-    public function getCommandDocument(): array
+    public function getCommandDocument()
     {
         return $this->update->getCommandDocument();
     }

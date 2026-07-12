@@ -18,11 +18,13 @@
 namespace MongoDB\Command;
 
 use MongoDB\Driver\Command;
-use MongoDB\Driver\CursorInterface;
+use MongoDB\Driver\Cursor;
 use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\Driver\Server;
 use MongoDB\Driver\Session;
 use MongoDB\Exception\InvalidArgumentException;
+use MongoDB\Model\CachingIterator;
+use MongoDB\Operation\Executable;
 
 use function is_bool;
 use function is_integer;
@@ -34,7 +36,7 @@ use function MongoDB\is_document;
  * @internal
  * @see https://mongodb.com/docs/manual/reference/command/listCollections/
  */
-final class ListCollections
+class ListCollections implements Executable
 {
     /**
      * Constructs a listCollections command.
@@ -91,16 +93,17 @@ final class ListCollections
     /**
      * Execute the operation.
      *
-     * @return CursorInterface<array>
+     * @return CachingIterator<int, array>
+     * @see Executable::execute()
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): CursorInterface
+    public function execute(Server $server): CachingIterator
     {
-        /** @var CursorInterface<array> $cursor */
+        /** @var Cursor<array> $cursor */
         $cursor = $server->executeReadCommand($this->databaseName, $this->createCommand(), $this->createOptions());
         $cursor->setTypeMap(['root' => 'array', 'document' => 'array']);
 
-        return $cursor;
+        return new CachingIterator($cursor);
     }
 
     /**

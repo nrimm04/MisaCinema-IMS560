@@ -40,8 +40,10 @@ use function MongoDB\is_document;
  *
  * @see \MongoDB\Collection::distinct()
  * @see https://mongodb.com/docs/manual/reference/command/distinct/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class Distinct implements Explainable
+class Distinct implements Executable, Explainable
 {
     /**
      * Constructs a distinct command.
@@ -120,11 +122,13 @@ final class Distinct implements Explainable
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return array
      * @throws UnexpectedValueException if the command response was malformed
      * @throws UnsupportedException if read concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): array
+    public function execute(Server $server)
     {
         $inTransaction = isset($this->options['session']) && $this->options['session']->isInTransaction();
         if ($inTransaction && isset($this->options['readConcern'])) {
@@ -150,8 +154,9 @@ final class Distinct implements Explainable
      * Returns the command document for this operation.
      *
      * @see Explainable::getCommandDocument()
+     * @return array
      */
-    public function getCommandDocument(): array
+    public function getCommandDocument()
     {
         $cmd = $this->createCommandDocument();
 

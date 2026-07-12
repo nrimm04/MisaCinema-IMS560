@@ -21,6 +21,7 @@ use ArrayObject;
 use JsonSerializable;
 use MongoDB\BSON\Serializable;
 use MongoDB\BSON\Unserializable;
+use ReturnTypeWillChange;
 
 use function array_values;
 use function MongoDB\recursive_copy;
@@ -50,8 +51,9 @@ class BSONArray extends ArrayObject implements JsonSerializable, Serializable, U
      *
      * @see https://php.net/oop5.magic#object.set-state
      * @see https://php.net/var-export
+     * @return self
      */
-    public static function __set_state(array $properties): self
+    public static function __set_state(array $properties)
     {
         $array = new self();
         $array->exchangeArray($properties);
@@ -66,8 +68,10 @@ class BSONArray extends ArrayObject implements JsonSerializable, Serializable, U
      * as a BSON array.
      *
      * @see https://php.net/mongodb-bson-serializable.bsonserialize
+     * @return array
      */
-    public function bsonSerialize(): array
+    #[ReturnTypeWillChange]
+    public function bsonSerialize()
     {
         return array_values($this->getArrayCopy());
     }
@@ -78,7 +82,8 @@ class BSONArray extends ArrayObject implements JsonSerializable, Serializable, U
      * @see https://php.net/mongodb-bson-unserializable.bsonunserialize
      * @param array<int, mixed> $data Array data
      */
-    public function bsonUnserialize(array $data): void
+    #[ReturnTypeWillChange]
+    public function bsonUnserialize(array $data)
     {
         parent::__construct($data);
     }
@@ -90,8 +95,10 @@ class BSONArray extends ArrayObject implements JsonSerializable, Serializable, U
      * as a JSON array.
      *
      * @see https://php.net/jsonserializable.jsonserialize
+     * @return array
      */
-    public function jsonSerialize(): array
+    #[ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         return array_values($this->getArrayCopy());
     }

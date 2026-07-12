@@ -36,8 +36,10 @@ use function sprintf;
  * @see \MongoDB\Collection::createSearchIndex()
  * @see \MongoDB\Collection::createSearchIndexes()
  * @see https://mongodb.com/docs/manual/reference/command/createSearchIndexes/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class CreateSearchIndexes
+class CreateSearchIndexes implements Executable
 {
     private array $indexes = [];
 
@@ -68,6 +70,7 @@ final class CreateSearchIndexes
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
      * @return string[] The names of the created indexes
      * @throws UnsupportedException if write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)

@@ -23,10 +23,12 @@ namespace MongoDB\Operation;
  *
  * @internal
  */
-interface Explainable
+interface Explainable extends Executable
 {
     /**
      * Returns the command document for this operation.
+     *
+     * @return array
      */
-    public function getCommandDocument(): array;
+    public function getCommandDocument();
 }

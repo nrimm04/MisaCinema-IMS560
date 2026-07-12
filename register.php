@@ -6,8 +6,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // Database Connection
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
-$usersCollection = $client->misacinema_db->users;
+// Database Connection
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
+$db = $client->misacinema_db;          // Kita namakan database lokal kau: misacinema
+$usersCollection = $db->users;      // Kita tentukan collection untuk users
 
 $errorMsg = "";
 $successMsg = "";

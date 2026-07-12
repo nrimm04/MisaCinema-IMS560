@@ -122,9 +122,10 @@ function all_servers_support_write_stage_on_secondary(array $servers): bool
  * @internal
  * @param array|object $document Document to which the type map will be applied
  * @param array        $typeMap  Type map for BSON deserialization.
+ * @return array|object
  * @throws InvalidArgumentException
  */
-function apply_type_map_to_document(array|object $document, array $typeMap): array|object
+function apply_type_map_to_document(array|object $document, array $typeMap)
 {
     if (! is_document($document)) {
         throw InvalidArgumentException::expectedDocumentType('$document', $document);
@@ -182,8 +183,9 @@ function document_to_array(array|object $document): array
  * @see Collection::drop()
  * @see Database::createCollection()
  * @see Database::dropCollection()
+ * @return array|object|null
  */
-function get_encrypted_fields_from_driver(string $databaseName, string $collectionName, Manager $manager): array|object|null
+function get_encrypted_fields_from_driver(string $databaseName, string $collectionName, Manager $manager)
 {
     $encryptedFieldsMap = (array) $manager->getEncryptedFieldsMap();
 
@@ -197,8 +199,9 @@ function get_encrypted_fields_from_driver(string $databaseName, string $collecti
  * @see https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#collection-encryptedfields-lookup-getencryptedfields
  * @see Collection::drop()
  * @see Database::dropCollection()
+ * @return array|object|null
  */
-function get_encrypted_fields_from_server(string $databaseName, string $collectionName, Server $server): array|object|null
+function get_encrypted_fields_from_server(string $databaseName, string $collectionName, Server $server)
 {
     $collectionInfoIterator = (new ListCollections($databaseName, ['filter' => ['name' => $collectionName]]))->execute($server);
 
@@ -383,6 +386,24 @@ function is_last_pipeline_operator_write(array $pipeline): bool
 }
 
 /**
+ * Return whether the "out" option for a mapReduce operation is "inline".
+ *
+ * This is used to determine if a mapReduce command requires a primary.
+ *
+ * @internal
+ * @see https://mongodb.com/docs/manual/reference/command/mapReduce/#output-inline
+ * @param string|array|object $out Output specification
+ */
+function is_mapreduce_output_inline(string|array|object $out): bool
+{
+    if (! is_array($out) && ! is_object($out)) {
+        return false;
+    }
+
+    return array_key_first(document_to_array($out)) === 'inline';
+}
+
+/**
  * Return whether the write concern is acknowledged.
  *
  * This function is similar to mongoc_write_concern_is_acknowledged but does not
@@ -443,9 +464,10 @@ function is_string_array(mixed $input): bool
  * @internal
  * @see https://bugs.php.net/bug.php?id=49664
  * @param mixed $element Value to be copied
+ * @return mixed
  * @throws ReflectionException
  */
-function recursive_copy(mixed $element): mixed
+function recursive_copy(mixed $element)
 {
     if (is_array($element)) {
         foreach ($element as $key => $value) {

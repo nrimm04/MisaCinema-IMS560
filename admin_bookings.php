@@ -13,7 +13,7 @@ require 'vendor/autoload.php';
 // PENTING: Baris ini cuma boleh ada SEKALI sahaja
 use MongoDB\BSON\ObjectId;
 
-$client = new MongoDB\Client("mongodb+srv://adminmisa:123@cluster0.sv61lap.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+$client = new MongoDB\Client("mongodb+srv://nrimam04_db_user:admin123@cluster0.sv61lap.mongodb.net/?appName=Cluster0");
 $bookingCollection = $client->misacinema_db->bookings;
 $movieCollection = $client->misacinema_db->shows;
 

@@ -33,8 +33,10 @@ use function MongoDB\is_pipeline;
  *
  * @see \MongoDB\Collection::replaceOne()
  * @see https://mongodb.com/docs/manual/reference/command/update/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class ReplaceOne
+class ReplaceOne implements Executable
 {
     private Update $update;
 
@@ -109,15 +111,18 @@ final class ReplaceOne
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return UpdateResult
      * @throws UnsupportedException if collation is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): UpdateResult
+    public function execute(Server $server)
     {
         return $this->update->execute($server);
     }
 
-    private function validateReplacement(array|object $replacement, ?DocumentCodec $codec): array|object
+    /** @return array|object */
+    private function validateReplacement(array|object $replacement, ?DocumentCodec $codec)
     {
         if ($codec) {
             $replacement = $codec->encode($replacement);

@@ -34,8 +34,10 @@ use function is_string;
  *
  * @see \MongoDB\Collection::listSearchIndexes()
  * @see https://mongodb.com/docs/manual/reference/command/listSearchIndexes/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class ListSearchIndexes
+class ListSearchIndexes implements Executable
 {
     private array $listSearchIndexesOptions;
     private array $aggregateOptions;
@@ -68,6 +70,7 @@ final class ListSearchIndexes
      * Execute the operation.
      *
      * @return Iterator&Countable
+     * @see Executable::execute()
      * @throws UnexpectedValueException if the command response was malformed
      * @throws UnsupportedException if collation or read concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)

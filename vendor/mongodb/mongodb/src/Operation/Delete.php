@@ -40,7 +40,7 @@ use function MongoDB\server_supports_feature;
  * @internal
  * @see https://mongodb.com/docs/manual/reference/command/delete/
  */
-final class Delete implements Explainable
+class Delete implements Executable, Explainable
 {
     private const WIRE_VERSION_FOR_HINT = 9;
 
@@ -118,10 +118,12 @@ final class Delete implements Explainable
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return DeleteResult
      * @throws UnsupportedException if hint or write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): DeleteResult
+    public function execute(Server $server)
     {
         /* CRUD spec requires a client-side error when using "hint" with an
          * unacknowledged write concern on an unsupported server. */
@@ -149,8 +151,9 @@ final class Delete implements Explainable
      * Returns the command document for this operation.
      *
      * @see Explainable::getCommandDocument()
+     * @return array
      */
-    public function getCommandDocument(): array
+    public function getCommandDocument()
     {
         $cmd = ['delete' => $this->collectionName, 'deletes' => [['q' => $this->filter] + $this->createDeleteOptions()]];
 

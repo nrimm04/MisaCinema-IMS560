@@ -22,6 +22,7 @@ use ArrayObject;
 use JsonSerializable;
 use MongoDB\BSON\Serializable;
 use MongoDB\BSON\Unserializable;
+use ReturnTypeWillChange;
 use stdClass;
 
 use function MongoDB\recursive_copy;
@@ -64,8 +65,9 @@ class BSONDocument extends ArrayObject implements JsonSerializable, Serializable
      *
      * @see https://php.net/oop5.magic#object.set-state
      * @see https://php.net/var-export
+     * @return self
      */
-    public static function __set_state(array $properties): self
+    public static function __set_state(array $properties)
     {
         $document = new self();
         $document->exchangeArray($properties);
@@ -77,8 +79,10 @@ class BSONDocument extends ArrayObject implements JsonSerializable, Serializable
      * Serialize the document to BSON.
      *
      * @see https://php.net/mongodb-bson-serializable.bsonserialize
+     * @return stdClass
      */
-    public function bsonSerialize(): stdClass
+    #[ReturnTypeWillChange]
+    public function bsonSerialize()
     {
         return (object) $this->getArrayCopy();
     }
@@ -89,7 +93,8 @@ class BSONDocument extends ArrayObject implements JsonSerializable, Serializable
      * @see https://php.net/mongodb-bson-unserializable.bsonunserialize
      * @param array<string, mixed> $data Array data
      */
-    public function bsonUnserialize(array $data): void
+    #[ReturnTypeWillChange]
+    public function bsonUnserialize(array $data)
     {
         parent::__construct($data, ArrayObject::ARRAY_AS_PROPS);
     }
@@ -98,8 +103,10 @@ class BSONDocument extends ArrayObject implements JsonSerializable, Serializable
      * Serialize the array to JSON.
      *
      * @see https://php.net/jsonserializable.jsonserialize
+     * @return object
      */
-    public function jsonSerialize(): stdClass
+    #[ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         return (object) $this->getArrayCopy();
     }

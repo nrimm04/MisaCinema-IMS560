@@ -13,7 +13,6 @@ class StreamException extends RuntimeException
     /**
      * @param resource $source
      * @param resource $destination
-     * @internal
      */
     public static function downloadFromFilenameFailed(string $filename, $source, $destination): self
     {
@@ -26,7 +25,6 @@ class StreamException extends RuntimeException
     /**
      * @param resource $source
      * @param resource $destination
-     * @internal
      */
     public static function downloadFromIdFailed(mixed $id, $source, $destination): self
     {
@@ -37,10 +35,7 @@ class StreamException extends RuntimeException
         return new self(sprintf('Downloading file from "%s" to "%s" failed. GridFS identifier: "%s"', $sourceMetadata['uri'], $destinationMetadata['uri'], $idString));
     }
 
-    /**
-     * @param resource $source
-     * @internal
-     */
+    /** @param resource $source */
     public static function uploadFailed(string $filename, $source, string $destinationUri): self
     {
         $sourceMetadata = stream_get_meta_data($source);

@@ -11,7 +11,7 @@ use function call_user_func;
 use function time;
 
 /** @internal */
-final class WithTransaction
+class WithTransaction
 {
     /** @var callable */
     private $callback;

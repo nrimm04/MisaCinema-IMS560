@@ -17,6 +17,7 @@
 
 namespace MongoDB\GridFS;
 
+use Iterator;
 use MongoDB\BSON\Document;
 use MongoDB\Codec\DocumentCodec;
 use MongoDB\Collection;
@@ -43,6 +44,7 @@ use function fopen;
 use function get_resource_type;
 use function in_array;
 use function is_array;
+use function is_bool;
 use function is_integer;
 use function is_object;
 use function is_resource;
@@ -56,7 +58,10 @@ use function stream_context_create;
 use function stream_copy_to_stream;
 use function stream_get_meta_data;
 use function stream_get_wrappers;
+use function trigger_error;
 use function urlencode;
+
+use const E_USER_DEPRECATED;
 
 /**
  * Bucket provides a public API for interacting with the GridFS files and chunks
@@ -82,6 +87,8 @@ class Bucket
 
     private string $bucketName;
 
+    private bool $disableMD5;
+
     private int $chunkSizeBytes;
 
     private ReadConcern $readConcern;
@@ -103,6 +110,9 @@ class Bucket
      *  * chunkSizeBytes (integer): The chunk size in bytes. Defaults to
      *    261120 (i.e. 255 KiB).
      *
+     *  * disableMD5 (boolean): When true, no MD5 sum will be generated for
+     *    each stored file. Defaults to "false".
+     *
      *  * readConcern (MongoDB\Driver\ReadConcern): Read concern.
      *
      *  * readPreference (MongoDB\Driver\ReadPreference): Read preference.
@@ -118,9 +128,14 @@ class Bucket
      */
     public function __construct(private Manager $manager, private string $databaseName, array $options = [])
     {
+        if (isset($options['disableMD5']) && $options['disableMD5'] === false) {
+            @trigger_error('Setting GridFS "disableMD5" option to "false" is deprecated since mongodb/mongodb 1.18 and will not be supported in version 2.0.', E_USER_DEPRECATED);
+        }
+
         $options += [
             'bucketName' => self::DEFAULT_BUCKET_NAME,
             'chunkSizeBytes' => self::DEFAULT_CHUNK_SIZE_BYTES,
+            'disableMD5' => false,
         ];
 
         if (! is_string($options['bucketName'])) {
@@ -137,6 +152,10 @@ class Bucket
 
         if (isset($options['codec']) && ! $options['codec'] instanceof DocumentCodec) {
             throw InvalidArgumentException::invalidType('"codec" option', $options['codec'], DocumentCodec::class);
+        }
+
+        if (! is_bool($options['disableMD5'])) {
+            throw InvalidArgumentException::invalidType('"disableMD5" option', $options['disableMD5'], 'boolean');
         }
 
         if (isset($options['readConcern']) && ! $options['readConcern'] instanceof ReadConcern) {
@@ -162,6 +181,7 @@ class Bucket
         $this->bucketName = $options['bucketName'];
         $this->chunkSizeBytes = $options['chunkSizeBytes'];
         $this->codec = $options['codec'] ?? null;
+        $this->disableMD5 = $options['disableMD5'];
         $this->readConcern = $options['readConcern'] ?? $this->manager->getReadConcern();
         $this->readPreference = $options['readPreference'] ?? $this->manager->getReadPreference();
         $this->typeMap = $options['typeMap'] ?? self::DEFAULT_TYPE_MAP;
@@ -182,13 +202,15 @@ class Bucket
      * Return internal properties for debugging purposes.
      *
      * @see https://php.net/manual/en/language.oop5.magic.php#language.oop5.magic.debuginfo
+     * @return array
      */
-    public function __debugInfo(): array
+    public function __debugInfo()
     {
         return [
             'bucketName' => $this->bucketName,
             'codec' => $this->codec,
             'databaseName' => $this->databaseName,
+            'disableMD5' => $this->disableMD5,
             'manager' => $this->manager,
             'chunkSizeBytes' => $this->chunkSizeBytes,
             'readConcern' => $this->readConcern,
@@ -205,10 +227,11 @@ class Bucket
      * attempt to delete orphaned chunks.
      *
      * @param mixed $id File ID
+     * @return void
      * @throws FileNotFoundException if no file could be selected
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function delete(mixed $id): void
+    public function delete(mixed $id)
     {
         $file = $this->collectionWrapper->findFileById($id);
         $this->collectionWrapper->deleteFileAndChunksById($id);
@@ -240,12 +263,13 @@ class Bucket
      *
      * @param mixed    $id          File ID
      * @param resource $destination Writable Stream
+     * @return void
      * @throws FileNotFoundException if no file could be selected
      * @throws InvalidArgumentException if $destination is not a stream
      * @throws StreamException if the file could not be uploaded
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function downloadToStream(mixed $id, $destination): void
+    public function downloadToStream(mixed $id, $destination)
     {
         if (! is_resource($destination) || get_resource_type($destination) != 'stream') {
             throw InvalidArgumentException::invalidType('$destination', $destination, 'resource');
@@ -279,12 +303,13 @@ class Bucket
      * @param string   $filename    Filename
      * @param resource $destination Writable Stream
      * @param array    $options     Download options
+     * @return void
      * @throws FileNotFoundException if no file could be selected
      * @throws InvalidArgumentException if $destination is not a stream
      * @throws StreamException if the file could not be uploaded
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function downloadToStreamByName(string $filename, $destination, array $options = []): void
+    public function downloadToStreamByName(string $filename, $destination, array $options = [])
     {
         if (! is_resource($destination) || get_resource_type($destination) != 'stream') {
             throw InvalidArgumentException::invalidType('$destination', $destination, 'resource');
@@ -300,9 +325,10 @@ class Bucket
      * Drops the files and chunks collections associated with this GridFS
      * bucket.
      *
+     * @return void
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function drop(): void
+    public function drop()
     {
         $this->collectionWrapper->dropCollections();
     }
@@ -314,11 +340,12 @@ class Bucket
      * @see Find::__construct() for supported options
      * @param array|object $filter  Query by which to filter documents
      * @param array        $options Additional options
+     * @return CursorInterface&Iterator
      * @throws UnsupportedException if options are not supported by the selected server
      * @throws InvalidArgumentException for parameter/option parsing errors
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function find(array|object $filter = [], array $options = []): CursorInterface
+    public function find(array|object $filter = [], array $options = [])
     {
         if ($this->codec && ! array_key_exists('codec', $options)) {
             $options['codec'] = $this->codec;
@@ -334,11 +361,12 @@ class Bucket
      * @see FindOne::__construct() for supported options
      * @param array|object $filter  Query by which to filter documents
      * @param array        $options Additional options
+     * @return array|object|null
      * @throws UnsupportedException if options are not supported by the selected server
      * @throws InvalidArgumentException for parameter/option parsing errors
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function findOne(array|object $filter = [], array $options = []): array|object|null
+    public function findOne(array|object $filter = [], array $options = [])
     {
         if ($this->codec && ! array_key_exists('codec', $options)) {
             $options['codec'] = $this->codec;
@@ -349,32 +377,40 @@ class Bucket
 
     /**
      * Return the bucket name.
+     *
+     * @return string
      */
-    public function getBucketName(): string
+    public function getBucketName()
     {
         return $this->bucketName;
     }
 
     /**
      * Return the chunks collection.
+     *
+     * @return Collection
      */
-    public function getChunksCollection(): Collection
+    public function getChunksCollection()
     {
         return $this->collectionWrapper->getChunksCollection();
     }
 
     /**
      * Return the chunk size in bytes.
+     *
+     * @return integer
      */
-    public function getChunkSizeBytes(): int
+    public function getChunkSizeBytes()
     {
         return $this->chunkSizeBytes;
     }
 
     /**
      * Return the database name.
+     *
+     * @return string
      */
-    public function getDatabaseName(): string
+    public function getDatabaseName()
     {
         return $this->databaseName;
     }
@@ -383,10 +419,11 @@ class Bucket
      * Gets the file document of the GridFS file associated with a stream.
      *
      * @param resource $stream GridFS stream
+     * @return array|object
      * @throws InvalidArgumentException if $stream is not a GridFS stream
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function getFileDocumentForStream($stream): array|object
+    public function getFileDocumentForStream($stream)
     {
         $file = $this->getRawFileDocumentForStream($stream);
 
@@ -402,11 +439,12 @@ class Bucket
      * Gets the file document's ID of the GridFS file associated with a stream.
      *
      * @param resource $stream GridFS stream
+     * @return mixed
      * @throws CorruptFileException if the file "_id" field does not exist
      * @throws InvalidArgumentException if $stream is not a GridFS stream
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function getFileIdForStream($stream): mixed
+    public function getFileIdForStream($stream)
     {
         $file = $this->getRawFileDocumentForStream($stream);
 
@@ -426,8 +464,10 @@ class Bucket
 
     /**
      * Return the files collection.
+     *
+     * @return Collection
      */
-    public function getFilesCollection(): Collection
+    public function getFilesCollection()
     {
         return $this->collectionWrapper->getFilesCollection();
     }
@@ -436,24 +476,29 @@ class Bucket
      * Return the read concern for this GridFS bucket.
      *
      * @see https://php.net/manual/en/mongodb-driver-readconcern.isdefault.php
+     * @return ReadConcern
      */
-    public function getReadConcern(): ReadConcern
+    public function getReadConcern()
     {
         return $this->readConcern;
     }
 
     /**
      * Return the read preference for this GridFS bucket.
+     *
+     * @return ReadPreference
      */
-    public function getReadPreference(): ReadPreference
+    public function getReadPreference()
     {
         return $this->readPreference;
     }
 
     /**
      * Return the type map for this GridFS bucket.
+     *
+     * @return array
      */
-    public function getTypeMap(): array
+    public function getTypeMap()
     {
         return $this->typeMap;
     }
@@ -462,8 +507,9 @@ class Bucket
      * Return the write concern for this GridFS bucket.
      *
      * @see https://php.net/manual/en/mongodb-driver-writeconcern.isdefault.php
+     * @return WriteConcern
      */
-    public function getWriteConcern(): WriteConcern
+    public function getWriteConcern()
     {
         return $this->writeConcern;
     }
@@ -535,6 +581,9 @@ class Bucket
      *  * chunkSizeBytes (integer): The chunk size in bytes. Defaults to the
      *    bucket's chunk size.
      *
+     *  * disableMD5 (boolean): When true, no MD5 sum will be generated for
+     *    the stored file. Defaults to "false".
+     *
      *  * metadata (document): User data for the "metadata" field of the files
      *    collection document.
      *
@@ -546,6 +595,7 @@ class Bucket
     {
         $options += [
             'chunkSizeBytes' => $this->chunkSizeBytes,
+            'disableMD5' => $this->disableMD5,
         ];
 
         $path = $this->createPathForUpload();
@@ -588,10 +638,11 @@ class Bucket
      *
      * @param mixed  $id          File ID
      * @param string $newFilename New filename
+     * @return void
      * @throws FileNotFoundException if no file could be selected
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function rename(mixed $id, string $newFilename): void
+    public function rename(mixed $id, string $newFilename)
     {
         $updateResult = $this->collectionWrapper->updateFilenameForId($id, $newFilename);
 
@@ -599,9 +650,16 @@ class Bucket
             return;
         }
 
-        // If the update resulted in no modification, it's possible that the
-        // file did not exist, in which case we must raise an error.
-        if ($updateResult->getMatchedCount() !== 1) {
+        /* If the update resulted in no modification, it's possible that the
+         * file did not exist, in which case we must raise an error. Checking
+         * the write result's matched count will be most efficient, but fall
+         * back to a findOne operation if necessary (i.e. legacy writes).
+         */
+        $found = $updateResult->getMatchedCount() !== null
+            ? $updateResult->getMatchedCount() === 1
+            : $this->collectionWrapper->findFileById($id) !== null;
+
+        if (! $found) {
             throw FileNotFoundException::byId($id, $this->getFilesNamespace());
         }
     }
@@ -634,6 +692,9 @@ class Bucket
      *  * chunkSizeBytes (integer): The chunk size in bytes. Defaults to the
      *    bucket's chunk size.
      *
+     *  * disableMD5 (boolean): When true, no MD5 sum will be generated for
+     *    the stored file. Defaults to "false".
+     *
      *  * metadata (document): User data for the "metadata" field of the files
      *    collection document.
      *
@@ -645,7 +706,7 @@ class Bucket
      * @throws StreamException if the file could not be uploaded
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function uploadFromStream(string $filename, $source, array $options = []): mixed
+    public function uploadFromStream(string $filename, $source, array $options = [])
     {
         if (! is_resource($source) || get_resource_type($source) != 'stream') {
             throw InvalidArgumentException::invalidType('$source', $source, 'resource');
@@ -765,9 +826,9 @@ class Bucket
      *
      * @see StreamWrapper::setContextResolver()
      *
-     * @param string                                      $path    The full url provided to fopen(). It contains the filename.
-     *                                                             gridfs://database_name/collection_name.files/file_name
-     * @param array{revision?: int, chunkSizeBytes?: int} $context The options provided to fopen()
+     * @param string                                                         $path    The full url provided to fopen(). It contains the filename.
+     *                                                                                gridfs://database_name/collection_name.files/file_name
+     * @param array{revision?: int, chunkSizeBytes?: int, disableMD5?: bool} $context The options provided to fopen()
      *
      * @return array{collectionWrapper: CollectionWrapper, file: object}|array{collectionWrapper: CollectionWrapper, filename: string, options: array}
      *
@@ -798,6 +859,7 @@ class Bucket
                 'filename' => $filename,
                 'options' => $context + [
                     'chunkSizeBytes' => $this->chunkSizeBytes,
+                    'disableMD5' => $this->disableMD5,
                 ],
             ];
         }

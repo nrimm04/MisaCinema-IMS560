@@ -24,14 +24,19 @@ use MongoDB\Driver\Session;
 use MongoDB\Driver\WriteConcern;
 use MongoDB\Exception\InvalidArgumentException;
 
+use function current;
+use function is_array;
+
 /**
  * Operation for the dropDatabase command.
  *
  * @see \MongoDB\Client::dropDatabase()
  * @see \MongoDB\Database::drop()
  * @see https://mongodb.com/docs/manual/reference/command/dropDatabase/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class DropDatabase
+class DropDatabase implements Executable
 {
     /**
      * Constructs a dropDatabase command.
@@ -44,6 +49,9 @@ final class DropDatabase
      *
      *  * session (MongoDB\Driver\Session): Client session.
      *
+     *  * typeMap (array): Type map for BSON deserialization. This will be used
+     *    for the returned command result document.
+     *
      *  * writeConcern (MongoDB\Driver\WriteConcern): Write concern.
      *
      * @param string $databaseName Database name
@@ -54,6 +62,10 @@ final class DropDatabase
     {
         if (isset($this->options['session']) && ! $this->options['session'] instanceof Session) {
             throw InvalidArgumentException::invalidType('"session" option', $this->options['session'], Session::class);
+        }
+
+        if (isset($this->options['typeMap']) && ! is_array($this->options['typeMap'])) {
+            throw InvalidArgumentException::invalidType('"typeMap" option', $this->options['typeMap'], 'array');
         }
 
         if (isset($this->options['writeConcern']) && ! $this->options['writeConcern'] instanceof WriteConcern) {
@@ -68,11 +80,19 @@ final class DropDatabase
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return array|object Command result document
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): void
+    public function execute(Server $server)
     {
-        $server->executeWriteCommand($this->databaseName, $this->createCommand(), $this->createOptions());
+        $cursor = $server->executeWriteCommand($this->databaseName, $this->createCommand(), $this->createOptions());
+
+        if (isset($this->options['typeMap'])) {
+            $cursor->setTypeMap($this->options['typeMap']);
+        }
+
+        return current($cursor->toArray());
     }
 
     /**

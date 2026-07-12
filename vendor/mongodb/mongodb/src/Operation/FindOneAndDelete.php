@@ -29,8 +29,10 @@ use function MongoDB\is_document;
  *
  * @see \MongoDB\Collection::findOneAndDelete()
  * @see https://mongodb.com/docs/manual/reference/command/findAndModify/
+ *
+ * @final extending this class will not be supported in v2.0.0
  */
-final class FindOneAndDelete implements Explainable
+class FindOneAndDelete implements Executable, Explainable
 {
     private FindAndModify $findAndModify;
 
@@ -107,10 +109,12 @@ final class FindOneAndDelete implements Explainable
     /**
      * Execute the operation.
      *
+     * @see Executable::execute()
+     * @return array|object|null
      * @throws UnsupportedException if collation or write concern is used and unsupported
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
-    public function execute(Server $server): array|object|null
+    public function execute(Server $server)
     {
         return $this->findAndModify->execute($server);
     }
@@ -119,8 +123,9 @@ final class FindOneAndDelete implements Explainable
      * Returns the command document for this operation.
      *
      * @see Explainable::getCommandDocument()
+     * @return array
      */
-    public function getCommandDocument(): array
+    public function getCommandDocument()
     {
         return $this->findAndModify->getCommandDocument();
     }
